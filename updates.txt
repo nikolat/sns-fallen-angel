@@ -1,7 +1,7 @@
 charset,UTF-8
 file,LICENSE65d3616852dbf7b1a6d4b53b00626032size=7048date=2012-12-21T00:00:00
 file,ghost/master/akari.dll604e9d9fa66b8ad367d22ccd682a74e4size=889856date=2012-12-21T00:00:00
-file,ghost/master/descript.txt32e3f99bbd38b64cecf9d943a95b65adsize=267date=2012-12-21T00:00:00
+file,ghost/master/descript.txtf2bbda7b3993eb73866143eec4828e62size=270date=2012-12-21T00:00:00
 file,ghost/master/icon/icon.txt1b0eff17e4ae32d04086f17df7c4c6bdsize=46date=2012-12-21T00:00:00
 file,ghost/master/image/default.png6db3d8d961a86c8a3245680c353ddeeesize=576date=2012-12-21T00:00:00
 file,ghost/master/image/fam_bell.png136ea093aece1468f16e0ab5fc6127easize=789date=2012-12-21T00:00:00
@@ -34,7 +34,7 @@ file,ghost/master/template/plugin_menu.azr51dcb1b62610f32693d249de7f174ff4size
 file,ghost/master/template/plugin_util.azr213d36e6e034c906bc5862ea98046687size=14972date=2012-12-21T00:00:00
 file,ghost/master/template/resource.azr8fc5f672230263ef368e5b94cdd18188size=778date=2012-12-21T00:00:00
 file,install.txt34aaf2ed5f71e5becf512bdd6786b1c8size=67date=2012-12-21T00:00:00
-file,readme.txtf8d3e6748cd44dd5fe200bfcbe3dc423size=1412date=2012-12-21T00:00:00
+file,readme.txtd220d2469270fa392210d9865f826cb5size=1415date=2012-12-21T00:00:00
 file,shell/master/base00.png7051deaf31d7b70652ebb84f8dfd3c39size=50494date=2012-12-21T00:00:00
 file,shell/master/descript.txtda54899d2d2c20fe31913d3b35d297a4size=709date=2012-12-21T00:00:00
 file,shell/master/readme.txt7f238bff5d01400ec4ea6040e651f089size=1035date=2012-12-21T00:00:00
