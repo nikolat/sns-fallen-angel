@@ -405,6 +405,7 @@ array TH_saveJsonTL(dict ref)
 		string sname = d["post"]["author"]["handle"];
 		string name = d["post"]["author"]["displayName"];
 		string post = d["post"]["record"]["text"];
+		string createdAt = d["post"]["record"]["createdAt"];
 		if (dIconPath[sname] == nil) {
 			string image_url = d["post"]["author"]["avatar"];
 			TH_getIcon(image_url, sname);
@@ -415,6 +416,7 @@ array TH_saveJsonTL(dict ref)
 		};
 		dict dAdd = ${
 			$("text", post),
+			$("createdAt", createdAt),
 			$("boostby", boostby),
 			$("user", dUser)
 		};
@@ -441,6 +443,7 @@ array TH_saveJsonNotify(dict ref)
 		string reason = d["reason"];
 		string sname = d["author"]["handle"];
 		string name = d["author"]["displayName"];
+		string createdAt = d["record"]["createdAt"];
 		string post = "";
 		if (reason == "reply") {
 			post = d["record"]["text"];
@@ -455,6 +458,7 @@ array TH_saveJsonNotify(dict ref)
 		};
 		dict dAdd = ${
 			$("text", post),
+			$("createdAt", createdAt),
 			$("reason", reason),
 			$("user", dUser)
 		};
@@ -652,8 +656,7 @@ string PopUpTL(dict ref)
 }
 TH_post_getTimelinePopUp(dict ref)
 {
-	array arTLAdd = TH_saveJsonTL(ref);
-	arHome = arTLAdd;
+	arHomeNext = TH_saveJsonTL(ref);
 	sHome = "";
 	string server_url = dictSaveData["server_url"];
 	string identifier = dictSaveData["identifier"];
@@ -671,11 +674,65 @@ TH_post_getTimelinePopUp(dict ref)
 }
 TH_post_listNotificationsPopUp(dict ref)
 {
-	array arTLAdd = TH_saveJsonNotify(ref);
-	arMentions = arTLAdd;
+	arMentionsNext = TH_saveJsonNotify(ref);
 	sMentions = "";
+
+	double lastPostIdMentions;
+	if (_aryvn(arMentions) > 0)
+		lastPostIdMentions = _pow(0.1, 10) * _regex_replace(arMentions[0]["createdAt"], "[\\-TZ:.]", "");
+	double lastPostIdHome;
+	if (_aryvn(arHome) > 0)
+		lastPostIdHome = _pow(0.1, 10) * _regex_replace(arHome[0]["createdAt"], "[\\-TZ:.]", "");
+	array arTL;
+	int n;
+	array arPostMentions;
+	array arPostHome;
+	arTL = arMentionsNext;
+	n = _aryvn(arTL);
+	for (int i = 0; i < n; i++) {
+		dict d = arTL[i];
+		double postid = _pow(0.1, 10) * _regex_replace(d["createdAt"], "[\\-TZ:.]", "");
+		if (lastPostIdMentions < postid) {
+			string name = d["user"]["name"];
+			string post = d["text"];
+			arPostMentions += name + ": " + post;
+		}
+		else {
+			break;
+		}
+	}
+	arTL = arHomeNext;
+	n = _aryvn(arTL);
+	for (int i = 0; i < n; i++) {
+		dict d = arTL[i];
+		double postid = _pow(0.1, 10) * _regex_replace(d["createdAt"], "[\\-TZ:.]", "");
+		if (lastPostIdHome < postid) {
+			string name = d["user"]["name"];
+			string post = d["text"];
+			arPostHome += name + ": " + post;
+		}
+		else {
+			break;
+		}
+	}
+	arHome = arHomeNext;
+	arMentions = arMentionsNext;
+	int count = _aryvn(arPostMentions) + _aryvn(arPostHome);
+	if (count == 0)
+		return "";
 	string icon = "info";
-	string s = "\C\![set,trayballoon,--icon=" + icon + ",--timeout=15,--title=Bluesky新着,--text=" + arHome[0]["user"]["name"] + ": " + arHome[0]["text"] + "]";
+	if (_aryvn(arPostMentions) > 0)
+		icon = "warning";
+	string s = "\C\![set,trayballoon,--icon=" + icon + ",--timeout=15,--title=青空中毒 新着 " + count + "件";
+	n = _aryvn(arPostMentions);
+	for (int i = 0; i < n; i++) {
+		s += "," + escapeText("--text=" + arPostMentions[i]);
+	}
+	n = _aryvn(arPostHome);
+	for (int i = 0; i < n; i++) {
+		s += "," + escapeText("--text=" + arPostHome[i]);
+	}
+	s += "]\e";
 	speakBySSTP(s);
 }
 //-------------------------------------------------------
