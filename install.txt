@@ -1,4 +1,4 @@
 charset,UTF-8
 type,ghost
-name,SNS中毒
+name,青空中毒
 directory,sns-fallen-angel
