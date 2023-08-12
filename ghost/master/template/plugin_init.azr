@@ -1,0 +1,153 @@
+//******************************************************************************
+// グローバル変数
+//******************************************************************************
+string sender;
+string sender_saved;
+string hwnd;
+string ownedSSTPid;
+string selfName;
+string selfScreenName;
+int balloonWidth;
+array arHome;
+array arHomeNext;
+array arMentions;
+array arMentionsNext;
+array arLikes;
+array arLocalTimeline;
+string sHome;
+string sMentions;
+string sLikes;
+string sMessages;
+string sLocalTimeline;
+dict dIconPath;
+dict dEmojiPath;
+dict dEmojiPathAlpha;
+string postidToReply;
+string reservedScript;
+int isInit;
+int BALLOON_WIDTH_MIN = 100;
+string accessJwt;
+//******************************************************************************
+// プラグイン初期化処理
+//******************************************************************************
+loadPlugin()
+{
+	if (dictSaveData["server_url"] == nil)
+		dictSaveData += $("server_url", getDefaultServerURL());
+}
+//******************************************************************************
+// プラグイン後始末処理
+//******************************************************************************
+unloadPlugin()
+{
+	// アイコンファイル削除
+	array a = _fenum("icon")["file"];
+	for (int i = 0; a[i] != nil; i++) {
+		if (_regex_match(a[i], "^(icon|image)_.*\.png$"))
+			_fdelete("icon\\" + a[i]);
+	}
+}
+//******************************************************************************
+// PLUGIN Event
+//******************************************************************************
+//-------------------------------------------------------
+// 選択肢
+//-------------------------------------------------------
+string OnChoiceSelect(dict ref)
+{
+	return _fncstr(ref["Reference0"], ref);
+}
+string OnChoiceSelectEx(dict ref)
+{
+	return _fncstr(ref["Reference1"], ref);
+}
+//-------------------------------------------------------
+// アンカー
+//-------------------------------------------------------
+string OnAnchorSelect(dict ref)
+{
+	string id = ref["Reference0"];
+	string regurl = "^(https?://|www\.)[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+$";
+	if (_regex_match(id, regurl)) {
+		if (_regex_match(id, "^www\..+$")) {
+			id = "http://" + id;
+		}
+		string url = escapeText(id);
+		return "\C\![open,browser," + url + "]\_l[0,0]\_q \_q\e";
+	} else {
+		return _fncstr(id, ref);
+	}
+}
+//-------------------------------------------------------
+// ユーザ入力
+//-------------------------------------------------------
+string OnUserInput(dict ref)
+{
+	return _fncstr("Input" + ref["Reference0"], ref);
+}
+//-------------------------------------------------------
+// イベント：OnExecuteHTTPComplete
+// 内容　　：\![execute,http-post]成功
+//-------------------------------------------------------
+string OnExecuteHTTPComplete(dict ref)
+{
+	string s = "";
+	switch (ref["Reference1"])
+	{
+	  case "createSession":
+		s = post_createSession(ref);
+		break;
+	  case "getProfile":
+		s = post_getProfile(ref);
+		break;
+	  case "getTimeline":
+		_create_thread("TH_post_getTimeline", ref);
+		s = "\![set,balloontimeout,0]\0\b[2]\_q■updating Timeline...\_q\e";
+		break;
+	  case "listNotifications":
+		_create_thread("TH_post_listNotifications", ref);
+		s = "\![set,balloontimeout,0]\0\b[2]\_q■updating Notifications...\_q\e";
+		break;
+	  case "getTimelinePopUp":
+		_create_thread("TH_post_getTimelinePopUp", ref);
+		break;
+	  case "listNotificationsPopUp":
+		_create_thread("TH_post_listNotificationsPopUp", ref);
+		break;
+	  default:
+		break;
+	}
+	return s;
+}
+//-------------------------------------------------------
+// イベント：OnExecuteHTTPFailure
+// 内容　　：\![execute,http-post]失敗
+//-------------------------------------------------------
+string OnExecuteHTTPFailure(dict ref)
+{
+	selfScreenName = "";
+	selfName = "";
+	accessJwt = "";
+	return s;
+}
+//-------------------------------------------------------
+// イベント：OnTrayBalloonClick
+//-------------------------------------------------------
+string OnTrayBalloonClick(dict ref)
+{
+	string title = ref["Reference0"];
+	if (_strstr(title, "新着") >= 0) {
+		if (balloonWidth < 100)
+			return "\![raise,OnMenuExec]\e";
+		else
+			return showHomeTL();
+	}
+	return "";
+}
+//******************************************************************************
+// 固有設定
+//******************************************************************************
+string getDefaultServerURL()
+{
+	return "https://bsky.social";
+}

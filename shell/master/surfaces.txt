@@ -1,0 +1,43 @@
+charset,UTF-8
+
+descript
+{
+version,1
+}
+
+// カーソル
+sakura.cursor
+{
+mouseup1,頭,system:hand
+mousedown1,頭,system:grip
+}
+
+// ベース
+surface0
+{
+element0,base,base00.png,0,0
+collisionex0,頭,polygon,391,125,169,139,241,45,375,53
+collisionex1,頬,polygon,296,179,319,173,326,184,302,201,290,188
+collisionex2,頬,polygon,262,210,257,188,243,188,246,203
+collisionex3,手,polygon,245,313,238,357,226,363,223,349,230,313
+collisionex4,手,polygon,208,434,230,426,243,481,240,486,229,468,226,498,216,499,211,481,208,467,204,499,200,496,200,474,194,474
+collisionex5,耳,polygon,347,132,372,128,374,144,359,166,331,181,352,157,351,146
+}
+
+// 着せ替え
+surface0-9
+{
+// ワンピース
+animation1000.interval,bind
+animation1000.pattern0,overlay,11000,0,0,0
+
+// 翼
+animation2000.interval,bind
+animation2000.pattern0,overlay,12000,0,0,0
+animation2000.collisionex0,翼,polygon,301,259,302,264,322,273,329,293,343,282,382,330,429,291,390,214,350,247
+
+// 尻尾
+animation3000.interval,bind
+animation3000.pattern0,overlay,13000,0,0,0
+animation3000.collisionex0,尻尾,polygon,299,372,298,377,340,383,357,389,352,393,378,414,374,383,341,376
+}

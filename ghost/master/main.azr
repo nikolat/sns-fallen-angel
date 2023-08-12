@@ -1,0 +1,86 @@
+// セーブ用
+dict dictSaveData;
+load()
+{
+	// 辞書読み込み
+	_script_load("template\event");
+	_script_load("template\resource");
+	_script_load("template\plugin_init");
+	_script_load("template\plugin_menu");
+	_script_load("template\plugin_util");
+	// SAORIロード
+	_saoriload("saori\httpc\httpc.dll", "httpc");
+	_saoriload("saori\imgctl_saori\imgctl_saori.dll", "imgctl_saori");
+	_saoriload("saori\textcopy2\textcopy2.dll", "textcopy2");
+	_saoriload("saori\yaya\yaya.dll", "yaya");
+	// セーブデータ読み込み
+	dictSaveData = _vload("savedata");
+	// プラグイン初期化処理
+	loadPlugin();
+}
+unload()
+{
+	// セーブデータ保存
+	_vsave("savedata", dictSaveData);
+	// プラグイン後始末処理
+	unloadPlugin();
+	//SAORIアンロード
+	_saoriunload("httpc");
+	_saoriunload("imgctl_saori");
+	_saoriunload("textcopy2");
+	_saoriunload("yaya");
+}
+array _customrequest(dict ref)
+{
+	array ar;
+	// SHIORIに対するリクエストでない場合
+	if (_strstr(ref["head"], "SHIORI") == -1) {
+		ar += "SHIORI/3.0 400 Bad Request";
+		ar += "Sender: akari";
+		ar += "Charset: UTF-8";
+		ar += "";
+		return ar;
+	}
+	// 未知のリクエスト
+	if (_strstr(ref["head"], "NOTIFY") == -1 && _strstr(ref["head"], "GET") == -1) {
+		ar += "SHIORI/3.0 400 Bad Request";
+		ar += "Sender: akari";
+		ar += "Charset: UTF-8";
+		ar += "";
+		return ar;
+	}
+	// セキュリティレベル="external"なら即返る
+	if (ref["SecurityLevel"] == "external") {
+		ar += "SHIORI/3.0 204 No Content";
+		ar += "Sender: akari";
+		ar += "Charset: UTF-8";
+		ar += "";
+		return ar;
+	}
+	string s = _eventdict[ref["ID"]];
+	if (s == "") s = _fncstr(ref["ID"], ref);
+	// NOTIFY
+	if (_strstr(ref["head"], "NOTIFY") != -1) {
+		ar += "SHIORI/3.0 204 No Content";
+		ar += "Sender: akari";
+		ar += "Charset: UTF-8";
+		ar += "";
+		return ar;
+	}
+	// GET
+	if (_strstr(ref["head"], "GET") != -1) {
+		if (s == "") {
+			ar += "SHIORI/3.0 204 No Content";
+			ar += "Sender: akari";
+			ar += "Charset: UTF-8";
+		}
+		else {
+			ar += "SHIORI/3.0 200 OK";
+			ar += "Sender: akari";
+			ar += "Charset: UTF-8";
+			ar += "Value: " + s;
+		}
+		ar += "";
+		return ar;
+	}
+}

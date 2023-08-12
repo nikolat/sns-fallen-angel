@@ -1,0 +1,33 @@
+charset,UTF-8
+readme.charset,UTF-8
+
+type,shell
+name,master
+craftman,GoEast
+
+seriko.use_self_alpha,1
+sakura.seriko.alignmenttodesktop,bottom
+
+//----------------------------------------
+// バルーン
+
+sakura.balloon.offsetx,60
+sakura.balloon.offsety,90
+
+//----------------------------------------
+// 着せ替え
+
+// ワンピース
+sakura.bindgroup1000.default,1
+sakura.bindoption.group,ワンピース,mustselect
+sakura.bindgroup1000.name,ワンピース,ワンピース
+
+// 翼
+sakura.bindgroup2000.default,1
+sakura.bindoption.group,翼,mustselect
+sakura.bindgroup2000.name,翼,翼
+
+// 尻尾
+sakura.bindgroup3000.default,1
+sakura.bindoption.group,尻尾,mustselect
+sakura.bindgroup3000.name,尻尾,尻尾

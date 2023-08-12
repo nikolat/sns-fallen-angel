@@ -1,0 +1,711 @@
+//******************************************************************************
+// 起動時に呼び出されるイベント
+//******************************************************************************
+//-------------------------------------------------------
+// イベント：OnMenuExec
+// 内容　　：起動
+//-------------------------------------------------------
+string OnMenuExec(dict ref)
+{
+	// 必要な情報をグローバル変数に保存
+	sender = ref["Sender"];
+	hwnd = _strsplit(_systemdict["hwnd"]["Reference0"], _bytechar(1))[0];
+	ownedSSTPid = _systemdict["uniqueid"]["Reference0"];
+
+	// バルーンサイズ取得、初期表示の予約
+	_create_thread("TH_InitPlugin");
+
+	// バルーンサイズの取得前に\0のballoonを\b[2]にしておく
+	string s = "\![set,balloontimeout,0]\0\b[2]\_q■booting...\_q\e";
+
+	return s;
+}
+//------------------------------------------------------------------------------
+// 関数名：TH_InitPlugin
+// 機能　：\b[2]のバルーンサイズ取得、初期表示
+//------------------------------------------------------------------------------
+TH_InitPlugin()
+{
+	_sleep(0.25);	// \b[2]を表示しきってからサイズの取得に移る
+	balloonWidth = getBalloonWidth();
+	if (balloonWidth < BALLOON_WIDTH_MIN)
+		balloonWidth = BALLOON_WIDTH_MIN;
+	// 自身の名前・アイコンを取得
+	if (selfScreenName == "") {
+		TH_VerifyAccount();
+		return;
+	}
+	// Homeが取得済なら表示
+	string funcName;
+	if (_aryvn(arHome) > 0)
+		funcName = "showHomeTL";
+	else
+		funcName = "showSettingMenu";
+	speakBySSTP("\C\![raise," + funcName + "]\e");
+}
+//------------------------------------------------------------------------------
+// 関数名：TH_VerifyAccount
+// 機能　：自身の名前・アイコンを取得
+//------------------------------------------------------------------------------
+TH_VerifyAccount()
+{
+	string url = "https://bsky.social/xrpc/com.atproto.server.createSession";
+
+	string server_url = dictSaveData["server_url"];
+	string identifier = dictSaveData["identifier"];
+	string password = dictSaveData["password"];
+	if ((server_url == "") || (identifier == "") || (password == "")) {
+		speakBySSTP("\C\![raise,showSettingMenu]\e");
+		return;
+	}
+	string url = server_url + "/xrpc/com.atproto.server.createSession";
+	string s = "\![execute,http-post"
+		+ "," + url
+		+ ",--content-type=application/json"
+		+ ",--nofile"
+		+ ",--async=createSession"
+		+ ",\"--param={\"\"identifier\"\": \"\"" + identifier + "\"\",\"\"password\"\": \"\"" + password + "\"\"}\""
+		+ "]";
+	speakBySSTP("\C" + s + "\e");
+}
+string post_createSession(dict ref)
+{
+	string jsonstr = ref["Reference3"];
+	dict d = _json2azv(jsonstr);
+	accessJwt = d["accessJwt"];
+	string url = "https://bsky.social/xrpc/app.bsky.actor.getProfile";
+	string s = "\![execute,http-get"
+		+ "," + url
+		+ ",--param=actor=" + dictSaveData["identifier"]
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--nofile"
+		+ ",--async=getProfile"
+		+ "]";
+	return "\C" + s;
+}
+string post_getProfile(dict ref)
+{
+	string jsonstr = ref["Reference3"];
+	dict d = _json2azv(jsonstr);
+	selfScreenName = d["handle"];
+	selfName = d["displayName"];
+	if (dIconPath[selfScreenName] == nil) {
+		string image_url = d["avatar"];
+		_create_thread("TH_getIcon", image_url, selfScreenName);
+	}
+	return showSettingMenu();
+}
+TH_getIcon(string image_url, string sname)
+{
+	string extension = ".jpg";
+	string tmpRelativePath = "icon\tmp" + extension;
+	string tmpPath = _abspath(tmpRelativePath);
+	string pathAfter = _abspath("icon\icon_" + sname + ".png");
+	http_download(image_url, tmpRelativePath);
+	if (isImageFile(tmpPath))
+	{
+		resizeImage(tmpPath, pathAfter, 16, 16);
+		_fdelete(tmpPath);
+	}
+	else
+	{
+		_fdelete(tmpPath);
+		string defaultIconPath = _abspath("image\default.png");
+		_fcopy(defaultIconPath, pathAfter);
+	}
+	dIconPath += $(sname, pathAfter);
+}
+//******************************************************************************
+// メニューアイコン
+//******************************************************************************
+//------------------------------------------------------------------------------
+// 関数名：showBottunSet
+// 機能　：バルーン上部に表示してるメニュー
+// 引数　：width バルーンの幅（省略時、グローバル変数より取得）
+// 戻り値：アイコンに選択肢を張ったSakuraScript
+//------------------------------------------------------------------------------
+string showBottunSet(int width)
+{
+	if (width < BALLOON_WIDTH_MIN)
+		width = balloonWidth;
+	int ofs = width - 16;
+
+	string s;
+	string path;
+	path = _abspath("image\fam_table_refresh.png");
+	s += "\_l[" + (ofs - 100) + ",0]\__q[UpdateAll]";
+	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	path = _abspath("image\fam_house.png");
+	s += "\_l[" + (ofs -  75) + ",0]\__q[ViewHome]";
+	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	path = _abspath("image\fam_bell.png");
+	s += "\_l[" + (ofs -  50) + ",0]\__q[ViewMentions]";
+	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	path = _abspath("image\fam_wrench.png");
+	s += "\_l[" + (ofs -  25) + ",0]\__q[Setting]";
+	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	path = _abspath("image\fam_cross.png");
+	s += "\_l[" + (ofs -   0) + ",0]\__q[Menu_CANCEL]";
+	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	return s;
+}
+//******************************************************************************
+// 閉じる
+//******************************************************************************
+//-------------------------------------------------------
+// 選択肢：Menu_CANCEL
+// 内容　：閉じる
+//-------------------------------------------------------
+string Menu_CANCEL(dict ref)
+{
+	return "\e";
+}
+//******************************************************************************
+// 設定
+//******************************************************************************
+//-------------------------------------------------------
+// 選択肢：Setting
+// 内容　：設定メニュー
+//-------------------------------------------------------
+string Setting(dict ref)
+{
+	return showSettingMenu();
+}
+//-------------------------------------------------------
+// 関数名：showSettingMenu
+// 機能　：設定メニュー表示
+// 戻り値：設定メニュー表示SakuraScript(オプションヘッダ設定済)
+//-------------------------------------------------------
+string showSettingMenu()
+{
+	string s;
+	s += setTimerraise();
+	s += "\![set,balloontimeout,0]\![set,choicetimeout,0]\0\b[2]\_q\_n";
+	s += showBottunSet(balloonWidth);
+	s += "\_l[0,0]■settings\_l[0,30]";
+	s += "\n\n";
+	if (selfScreenName != "") {
+		// ユーザアイコン表示
+		string path = dIconPath[selfScreenName];
+		s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+		// ユーザ名表示
+		s += " << \f[bold,true]" + selfName + "\f[bold,false] >> ";
+	}
+	s += "\n\n";
+	string str;
+	// identifier
+	str = "identifier          : " + dictSaveData["identifier"];
+	s += menuItem(str, {"Config", "identifier"}, 0);
+	// password
+	str = "password            : " + _regex_replace(dictSaveData["password"], "\w", "*");
+	s += menuItem(str, {"Config", "password"}, 100);
+	// Server URL
+	str = "Server URL          : " + dictSaveData["server_url"];
+	s += menuItem(str, {"Config", "Server_URL"}, 100);
+	// TL get interval
+	if (dictSaveData["TL_get_interval"] > 0) {
+		str  = "TL get interval     : " + fillSpace(dictSaveData["TL_get_interval"]) + " min";
+	} else {
+		str  = "TL get interval     : OFF";
+	}
+	s += menuItem(str, {"Config", "PopupTL"}, 100);
+	s += "\_n\_q\e";
+	return s;
+}
+//-------------------------------------------------------
+// 関数名：setTimerraise
+// 機能　：Toot取得タイマセット
+// 戻り値：タイマセットするSakuraScript
+//-------------------------------------------------------
+string setTimerraise()
+{
+	string s;
+	if (dictSaveData["TL_get_interval"] >= 0) {
+		s += "\![timerraise," + (60 * 1000 * dictSaveData["TL_get_interval"]) + ",0,PopUpTL]";
+	}
+	return s;
+}
+//-------------------------------------------------------
+// 選択肢：Config
+// 内容　：設定メニューで選択したIDの入力ボックスを開く
+// Reference2: 選択ID
+//-------------------------------------------------------
+string Config(dict ref)
+{
+	string selectedId  = ref["Reference2"];
+	string s = "\C\_l[0,0]\_q \_q" + closeAllInputBox();
+
+	switch (selectedId)
+	{
+	  case "identifier":
+		s += "\![open,inputbox," + selectedId + ",0," + dictSaveData["identifier"] + "]";
+		break;
+	  case "password":
+		s += "\![open,passwordinput," + selectedId + ",0," + dictSaveData["password"] + "]";
+		break;
+	  case "Server_URL":
+		s += "\![open,inputbox," + selectedId + ",0," + dictSaveData["server_url"] + "]";
+		break;
+	  case "PopupTL":
+		s += "\![open,sliderinput," + selectedId + ",0," + dictSaveData["TL_get_interval"] + ",0,30]";
+		break;
+	  default:
+		break;
+	}
+	s += "\e";
+	return s;
+}
+//-------------------------------------------------------
+// 関数名：closeAllInputBox
+// 機能　：すべての入力ボックスを閉じる
+// 戻り値：入力ボックスを閉じるSakuraScript
+//-------------------------------------------------------
+string closeAllInputBox()
+{
+	string s;
+	s += "\![close,inputbox,Post]";
+	s += "\![close,inputbox,identifier]";
+	s += "\![close,inputbox,password]";
+	s += "\![close,inputbox,Server_URL]";
+	s += "\![close,inputbox,PopupTL]";
+	return s;
+}
+//-------------------------------------------------------
+// 各種入力処理
+//-------------------------------------------------------
+string Inputidentifier(dict ref)
+{
+	if (dictSaveData["identifier"] == nil)
+		dictSaveData += $("identifier", ref["Reference1"]);
+	else
+		dictSaveData["identifier"] = ref["Reference1"];
+	clearLog();
+	return showSettingMenu();
+}
+string Inputpassword(dict ref)
+{
+	if (dictSaveData["password"] == nil)
+		dictSaveData += $("password", ref["Reference1"]);
+	else
+		dictSaveData["password"] = ref["Reference1"];
+	clearLog();
+	return showSettingMenu();
+}
+string InputServer_URL(dict ref)
+{
+	if (dictSaveData["server_url"] == nil)
+		dictSaveData += $("server_url", ref["Reference1"]);
+	else
+		dictSaveData["server_url"] = ref["Reference1"];
+	return showSettingMenu();
+}
+string InputPopupTL(dict ref)
+{
+	int min = ref["Reference1"];
+	if (dictSaveData["TL_get_interval"] == nil)
+		dictSaveData += $("TL_get_interval", min);
+	else
+		dictSaveData["TL_get_interval"] = min;
+	return showSettingMenu();
+}
+//-------------------------------------------------------
+// 関数名：clearLog
+// 機能　：取得済のログを消去し、再認証
+//-------------------------------------------------------
+clearLog()
+{
+	arHome = {};
+	sHome = "";
+	selfScreenName = "";
+	_create_thread("TH_VerifyAccount");
+}
+//******************************************************************************
+// 更新
+//******************************************************************************
+//-------------------------------------------------------
+// 選択肢：UpdateAll
+// 内容　：投稿全更新
+//-------------------------------------------------------
+string UpdateAll(dict ref)
+{
+	string s = "\![set,balloontimeout,0]\0\b[2]\_q■updating...\_q\e";
+	_create_thread("TH_UpdateAll");
+	return s;
+}
+//------------------------------------------------------------------------------
+// 関数名：TH_UpdateAll
+// 機能　：サイトから全投稿を取得して表示する
+//------------------------------------------------------------------------------
+TH_UpdateAll()
+{
+	string server_url = dictSaveData["server_url"];
+	string identifier = dictSaveData["identifier"];
+	if ((server_url == "") || (identifier == "") || accessJwt == "")
+		return;
+	string url = server_url + "/xrpc/app.bsky.feed.getTimeline";
+	string s = "\![execute,http-get"
+		+ "," + url
+		+ ",--param=actor=" + dictSaveData["identifier"]
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--nofile"
+		+ ",--async=getTimeline"
+		+ "]";
+	speakBySSTP(s);
+}
+
+TH_post_getTimeline(dict ref)
+{
+	array arTLAdd = TH_saveJsonTL(ref);
+	arHome = arTLAdd;
+	sHome = "";
+	string server_url = dictSaveData["server_url"];
+	string identifier = dictSaveData["identifier"];
+	if ((server_url == "") || (identifier == "") || accessJwt == "")
+		return;
+	string url = server_url + "/xrpc/app.bsky.notification.listNotifications";
+	string s = "\![execute,http-get"
+		+ "," + url
+		+ ",--param=actor=" + dictSaveData["identifier"]
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--nofile"
+		+ ",--async=listNotifications"
+		+ "]";
+	speakBySSTP(s);
+}
+
+TH_post_listNotifications(dict ref)
+{
+	array arTLAdd = TH_saveJsonNotify(ref);
+	arMentions = arTLAdd;
+	sMentions = "";
+	speakBySSTP("\![raise,showHomeTL]\e");
+}
+//------------------------------------------------------------------------------
+// 関数名：getJsonTL
+// 機能　：サイトから指定したJSONオブジェクトを取得する(必要な情報のみ取捨選択済)
+// 　　　　未取得のユーザアイコンも取得する
+// 引数　：url 取得先URL
+// 戻り値：JSONオブジェクト(配列型)
+//------------------------------------------------------------------------------
+array TH_saveJsonTL(dict ref)
+{
+	string jsonstr = ref["Reference3"];
+	dict d = _json2azv(jsonstr);
+	array arTLTmp = _json2azv(jsonstr)["feed"];
+	array arTLAdd;
+	int n = _aryvn(arTLTmp);
+	for (int i = 0; i < n; i++) {
+		dict d = arTLTmp[i];
+		string boostby = nil;
+		if (d["reason"] != nil) {
+			boostby = d["reason"]["by"]["handle"];
+			if (dIconPath[boostby] == nil) {
+				string image_url = d["reason"]["by"]["avatar"];
+				TH_getIcon(image_url, boostby);
+			}
+		}
+		string sname = d["post"]["author"]["handle"];
+		string name = d["post"]["author"]["displayName"];
+		string post = d["post"]["record"]["text"];
+		if (dIconPath[sname] == nil) {
+			string image_url = d["post"]["author"]["avatar"];
+			TH_getIcon(image_url, sname);
+		}
+		dict dUser = ${
+			$("screen_name", sname),
+			$("name", name)
+		};
+		dict dAdd = ${
+			$("text", post),
+			$("boostby", boostby),
+			$("user", dUser)
+		};
+		arTLAdd += dAdd;
+	}
+	return arTLAdd;
+}
+//------------------------------------------------------------------------------
+// 関数名：getJsonTL
+// 機能　：サイトから指定したJSONオブジェクトを取得する(必要な情報のみ取捨選択済)
+// 　　　　未取得のユーザアイコンも取得する
+// 引数　：url 取得先URL
+// 戻り値：JSONオブジェクト(配列型)
+//------------------------------------------------------------------------------
+array TH_saveJsonNotify(dict ref)
+{
+	string jsonstr = ref["Reference3"];
+	dict d = _json2azv(jsonstr);
+	array arTLTmp = _json2azv(jsonstr)["notifications"];
+	array arTLAdd;
+	int n = _aryvn(arTLTmp);
+	for (int i = 0; i < n; i++) {
+		dict d = arTLTmp[i];
+		string reason = d["reason"];
+		string sname = d["author"]["handle"];
+		string name = d["author"]["displayName"];
+		string post = "";
+		if (reason == "reply") {
+			post = d["record"]["text"];
+		}
+		if (dIconPath[sname] == nil) {
+			string image_url = d["author"]["avatar"];
+			TH_getIcon(image_url, sname);
+		}
+		dict dUser = ${
+			$("screen_name", sname),
+			$("name", name)
+		};
+		dict dAdd = ${
+			$("text", post),
+			$("reason", reason),
+			$("user", dUser)
+		};
+		arTLAdd += dAdd;
+	}
+	return arTLAdd;
+}
+//------------------------------------------------------------------------------
+// 関数名：showHomeTL
+// 機能　：Homeを表示する
+// 戻り値：Homeを表示するSakuraScript(オプションヘッダ設定済)
+//------------------------------------------------------------------------------
+string showHomeTL()
+{
+	string s;
+	s += showTL("home", arHome);
+	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
+	return s;
+}
+//------------------------------------------------------------------------------
+// 関数名：showMentionsTL
+// 機能　：Mentionsを表示する
+// 戻り値：Mentionsを表示するSakuraScript(オプションヘッダ設定済)
+//------------------------------------------------------------------------------
+string showMentionsTL()
+{
+	string s;
+	s += showTL("notifications", arMentions);
+	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
+	return s;
+}
+//------------------------------------------------------------------------------
+// 関数名：showTL
+// 機能　：指定したJSONオブジェクトからTLを表示
+// 引数　：title 表示タイトル
+// 引数　：arTL 解析するデータ
+// 戻り値：指定された内容を表示するSakuraScript
+//------------------------------------------------------------------------------
+string showTL(string title, array arTL)
+{
+	if (sender_saved == sender && balloonWidth > BALLOON_WIDTH_MIN) {
+		// キャッシュがあればそれを返す
+		if ((title == "home") && (sHome != ""))
+			return sHome;
+		if ((title == "notifications") && (sMentions != ""))
+			return sMentions;
+	}
+	else {
+		sHome = "";
+		sMentions = "";
+	}
+
+	string s;
+	s += showBottunSet(balloonWidth);
+	s += "\_l[0,0]■" + title + "\_l[0,16]\n[half]\n\n\n\n\n\n";
+	int numwords = _floor(balloonWidth / 6.14);
+	s += "\f[underline,true]\_n";
+	s += makeLongText("　", numwords);
+	s += "\f[underline,default]\n";
+	int n = _aryvn(arTL);
+	for (int i = 0; i < n; i++) {
+		dict d = arTL[i];
+		string sname = d["user"]["screen_name"];
+		string name = d["user"]["name"];
+		if (name == "") {
+			name = sname;
+		}
+		string post = d["text"];
+		string boostby = d["boostby"];
+		string reason = d["reason"];
+		// アイコン表示
+		string path = dIconPath[sname];
+		s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+		if (boostby != nil) {
+			path = dIconPath[boostby];
+			s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+		}
+		// 名前表示
+		s += menuUserName(name, {"ViewPost", title, name, post, sname});
+		// POST表示
+		string text;
+		if (title == "home") {
+			text = post;
+		}
+		else if (title == "notifications") {
+			if (reason == "reply") {
+				text = post;
+			}
+			else if (reason == "like") {
+				text = "Liked your post";
+			}
+			else if (reason == "repost") {
+				text = "Reposted your post";
+			}
+			else if (reason == "follow") {
+				text = "Followed you";
+			}
+			else {
+				text = "Unknown reason: " + escapeAllTags(reason);
+			}
+		}
+		numwords = _floor(balloonWidth / 6.14);
+		s += "\n[80]\f[height,-2]\_l[25,]";
+		post = escapeAllTags(makeShortText(text, numwords));
+		s += post;
+		s += "\n\f[height,default]";
+	}
+	s += "\_n";
+
+	// キャッシュ
+	if (title == "home")
+		sHome = s;
+	else if (title == "notifications")
+		sMentions = s;
+	sender_saved = sender;
+
+	return s;
+}
+//-------------------------------------------------------
+// 選択肢：ViewPost
+// 内容　：バルーン上部に個別のPOSTを加えたタイムラインを表示する
+//-------------------------------------------------------
+string ViewPost(dict ref)
+{
+	string s;
+	string title = ref["Reference2"];
+	switch (title)
+	{
+	  case "home":
+		s += showTL(title, arHome);
+		break;
+	  case "notifications":
+		s += showTL(title, arMentions);
+		break;
+	  default:
+		break;
+	}
+	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"]);
+	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
+
+	return s;
+}
+//------------------------------------------------------------------------------
+// 関数名：showViewPost
+// 機能　：バルーン上部に個別のPOSTを表示する
+// 引数　：title タイトル
+// 引数　：name ユーザ名（表示用）
+// 引数　：post POST内容
+// 引数　：sname ユーザ名
+// 戻り値：バルーン上部に個別のPOSTを表示するSakuraScript
+//------------------------------------------------------------------------------
+string showViewPost(string title, string name, string post, string sname)
+{
+	string s;
+	// 情報が無い場合はreturn
+	if (sname == "") {
+		return "";
+	}
+	// ユーザアイコン表示
+	string path = dIconPath[sname];
+	s += "\_l[0,0]\n\n[half]"
+		+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+	// テキストコピーアイコン表示
+	path = _abspath("image\fam_pencil_go.png");
+	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "]"
+		+ "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	// ユーザ名表示
+	string escapedName = escapeAllTags(name);
+	s += " << \f[bold,true]" + escapedName + "\f[bold,false] >> ";
+	// POST表示
+	string escapedPost = escapeAllTags(post);
+	escapedPost = _regex_replace(escapedPost, "\\\\\\\\n", "\\\\n");
+	s += "\n" + escapedPost;
+	return s;
+}
+//-------------------------------------------------------
+// 関数名：PopUpTL
+// 機能　：HomeとMentionsの投稿を取得しポップアップ通知する(タイマセット用)
+//-------------------------------------------------------
+string PopUpTL(dict ref)
+{
+	string server_url = dictSaveData["server_url"];
+	string identifier = dictSaveData["identifier"];
+	if ((server_url == "") || (identifier == "") || accessJwt == "")
+		return;
+	string url = server_url + "/xrpc/app.bsky.feed.getTimeline";
+	string s = "\![execute,http-get"
+		+ "," + url
+		+ ",--param=actor=" + dictSaveData["identifier"]
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--nofile"
+		+ ",--async=getTimelinePopUp"
+		+ "]";
+	return s;
+}
+TH_post_getTimelinePopUp(dict ref)
+{
+	array arTLAdd = TH_saveJsonTL(ref);
+	arHome = arTLAdd;
+	sHome = "";
+	string server_url = dictSaveData["server_url"];
+	string identifier = dictSaveData["identifier"];
+	if ((server_url == "") || (identifier == "") || accessJwt == "")
+		return;
+	string url = server_url + "/xrpc/app.bsky.notification.listNotifications";
+	string s = "\![execute,http-get"
+		+ "," + url
+		+ ",--param=actor=" + dictSaveData["identifier"]
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--nofile"
+		+ ",--async=listNotificationsPopUp"
+		+ "]";
+	speakBySSTP(s);
+}
+TH_post_listNotificationsPopUp(dict ref)
+{
+	array arTLAdd = TH_saveJsonNotify(ref);
+	arMentions = arTLAdd;
+	sMentions = "";
+	string icon = "info";
+	string s = "\C\![set,trayballoon,--icon=" + icon + ",--timeout=15,--title=Bluesky新着,--text=" + arHome[0]["user"]["name"] + ": " + arHome[0]["text"] + "]";
+	speakBySSTP(s);
+}
+//-------------------------------------------------------
+// 選択肢：TextCopy
+// 内容　：表示中のPOSTのテキストをクリップボードにコピーする
+//-------------------------------------------------------
+string TextCopy(dict ref)
+{
+	string text = ref["Reference4"];
+	textCopy2(text);
+	return ViewPost(ref);
+}
+//******************************************************************************
+// 表示
+//******************************************************************************
+//-------------------------------------------------------
+// 選択肢：ViewHome
+// 内容　：Homeを表示
+//-------------------------------------------------------
+string ViewHome(dict ref)
+{
+	return showHomeTL();
+}
+//-------------------------------------------------------
+// 選択肢：ViewMentions
+// 内容　：Mentionsを表示
+//-------------------------------------------------------
+string ViewMentions(dict ref)
+{
+	return showMentionsTL();
+}

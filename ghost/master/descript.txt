@@ -1,0 +1,11 @@
+charset,UTF-8
+type,ghost
+shiori,akari.dll
+name,SNS中毒
+sakura.name,レヴィ
+kero.name,虚空
+craftman,Don
+craftmanurl,https://nikolat.github.io/
+homeurl,https://raw.githubusercontent.com/nikolat/sns-fallen-angel/main/
+don't need onmousemove,1
+readme.charset,UTF-8

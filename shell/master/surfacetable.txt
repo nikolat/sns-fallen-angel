@@ -1,0 +1,15 @@
+charset,UTF-8
+version,1
+
+group,通常
+{
+0,通常
+}
+
+group,__disabled
+{
+10,
+11000,
+12000,
+13000,
+}
