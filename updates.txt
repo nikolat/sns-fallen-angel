@@ -30,7 +30,7 @@ file,ghost/master/saori/yaya/yaya.txte06e05316bf1288ceac43d7c2bf4ebcfsize=1700
 file,ghost/master/saori/yaya/yaya_readme.txtf3f30b903c63d782b51a2bd683857bf1size=3336date=2012-12-21T00:00:00
 file,ghost/master/template/event.azr2f9ec8b2e23cae045d5f6914376e87besize=2099date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_init.azr54d0448ead107b96bc549d0d946fe54asize=4472date=2012-12-21T00:00:00
-file,ghost/master/template/plugin_menu.azr84a6d195c876865f36972c56fc9d9e44size=23323date=2012-12-21T00:00:00
+file,ghost/master/template/plugin_menu.azr536848105a7e12e32e985fdd6b6fc3f5size=24879date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_util.azr213d36e6e034c906bc5862ea98046687size=14972date=2012-12-21T00:00:00
 file,ghost/master/template/resource.azr8fc5f672230263ef368e5b94cdd18188size=778date=2012-12-21T00:00:00
 file,install.txt50caa4ebb610d8fd926cc7d0e49b37adsize=70date=2012-12-21T00:00:00
