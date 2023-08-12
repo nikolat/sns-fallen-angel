@@ -128,7 +128,7 @@ string OnExecuteHTTPFailure(dict ref)
 	selfScreenName = "";
 	selfName = "";
 	accessJwt = "";
-	return s;
+	return showSettingMenu();
 }
 //-------------------------------------------------------
 // イベント：OnTrayBalloonClick
