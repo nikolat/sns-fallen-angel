@@ -49,8 +49,6 @@ TH_InitPlugin()
 //------------------------------------------------------------------------------
 TH_VerifyAccount()
 {
-	string url = "https://bsky.social/xrpc/com.atproto.server.createSession";
-
 	string server_url = dictSaveData["server_url"];
 	string identifier = dictSaveData["identifier"];
 	string password = dictSaveData["password"];
@@ -73,7 +71,7 @@ string post_createSession(dict ref)
 	string jsonstr = ref["Reference3"];
 	dict d = _json2azv(jsonstr);
 	accessJwt = d["accessJwt"];
-	string url = "https://bsky.social/xrpc/app.bsky.actor.getProfile";
+	string url = dictSaveData["server_url"] + "/xrpc/app.bsky.actor.getProfile";
 	string s = "\![execute,http-get"
 		+ "," + url
 		+ ",--param=actor=" + dictSaveData["identifier"]
