@@ -33,7 +33,7 @@ file,ghost/master/template/plugin_init.azr54d0448ead107b96bc549d0d946fe54asize
 file,ghost/master/template/plugin_menu.azr51dcb1b62610f32693d249de7f174ff4size=23389date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_util.azr213d36e6e034c906bc5862ea98046687size=14972date=2012-12-21T00:00:00
 file,ghost/master/template/resource.azr8fc5f672230263ef368e5b94cdd18188size=778date=2012-12-21T00:00:00
-file,install.txt34aaf2ed5f71e5becf512bdd6786b1c8size=67date=2012-12-21T00:00:00
+file,install.txt50caa4ebb610d8fd926cc7d0e49b37adsize=70date=2012-12-21T00:00:00
 file,readme.txtd220d2469270fa392210d9865f826cb5size=1415date=2012-12-21T00:00:00
 file,shell/master/base00.png7051deaf31d7b70652ebb84f8dfd3c39size=50494date=2012-12-21T00:00:00
 file,shell/master/descript.txtda54899d2d2c20fe31913d3b35d297a4size=709date=2012-12-21T00:00:00
