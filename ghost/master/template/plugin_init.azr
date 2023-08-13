@@ -114,6 +114,9 @@ string OnExecuteHTTPComplete(dict ref)
 	  case "listNotificationsPopUp":
 		_create_thread("TH_post_listNotificationsPopUp", ref);
 		break;
+	  case "createRecord":
+		s = UpdateAll();
+		break;
 	  default:
 		break;
 	}

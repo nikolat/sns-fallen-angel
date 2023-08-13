@@ -130,6 +130,9 @@ string showBottunSet(int width)
 
 	string s;
 	string path;
+	path = _abspath("image\fam_user_comment.png");
+	s += "\_l[" + (ofs - 125) + ",0]\__q[OpenPostBar,]";
+	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
 	path = _abspath("image\fam_table_refresh.png");
 	s += "\_l[" + (ofs - 100) + ",0]\__q[UpdateAll]";
 	s += "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
@@ -804,4 +807,79 @@ string ViewHome(dict ref)
 string ViewMentions(dict ref)
 {
 	return showMentionsTL();
+}
+//******************************************************************************
+// 投稿
+//******************************************************************************
+//-------------------------------------------------------
+// 選択肢：OpenPostBar
+// 内容　：投稿用入力ボックス表示
+//-------------------------------------------------------
+string OpenPostBar(dict ref)
+{
+	if (selfScreenName == "")
+		return showSettingMenu();
+	string path = dIconPath[selfScreenName];
+	string s;
+	s += closeAllInputBox();
+	s += "\![open,inputbox,Post,0,--limit=300]";
+	s += "\_l[0,0]\n\n[half]\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+	s += " << \f[bold,true]Post in 300 charactors.\f[bold,false] >>";
+	string title = ref["Reference2"];
+	if (title == "")
+		title = "home";
+	switch (title) {
+	  case "home":
+		s += showTL(title, arHome);
+		break;
+	  case "notifications":
+		s += showTL(title, arMentions);
+		break;
+	  default:
+		break;
+	}
+	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"], _strsplit(ref["Reference6"], _bytechar(1)));
+	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
+
+	return s;
+}
+//-------------------------------------------------------
+// 投稿入力処理
+//-------------------------------------------------------
+string InputPost(dict ref)
+{
+	string post = ref["Reference1"];
+	string server_url = dictSaveData["server_url"];
+	string url = server_url + "/xrpc/com.atproto.repo.createRecord";
+	string createdAt = 
+	dict param = ${
+		$("repo", dictSaveData["identifier"]),
+		$("collection", "app.bsky.feed.post"),
+		$("record", ${
+			$("text", post),
+			$("createdAt", getnow())
+		})
+	};
+	string paramstr = _strreplace(_azv2json(param), _bytechar(13) + _bytechar(10), "");
+	string s = "\![execute,http-post"
+		+ "," + url
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--content-type=application/json"
+		+ "," + escapeText(paramstr)
+		+ ",--async=createRecord"
+		+ ",--nofile"
+		+ "]\e";
+	return s;
+}
+string getnow()
+{
+	dict d = _gettime();
+	return "" + d["年"] + "-" + fillzero(d["月"]) + "-" + fillzero(d["日"]) + "T" + fillzero(d["時"]) + ":" + fillzero(d["分"]) + ":" + fillzero(d["秒"]) + "." + d["ミリ秒"] + "+09:00";
+}
+string fillzero(int n)
+{
+	if (n < 10)
+		return "0" + n;
+	else
+		return "" + n;
 }
