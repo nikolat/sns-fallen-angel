@@ -382,10 +382,10 @@ TH_post_listNotifications(dict ref)
 	speakBySSTP("\![raise,showHomeTL]\e");
 }
 //------------------------------------------------------------------------------
-// 関数名：getJsonTL
+// 関数名：TH_saveJsonTL
 // 機能　：サイトから指定したJSONオブジェクトを取得する(必要な情報のみ取捨選択済)
 // 　　　　未取得のユーザアイコンも取得する
-// 引数　：url 取得先URL
+// 引数　：ref
 // 戻り値：JSONオブジェクト(配列型)
 //------------------------------------------------------------------------------
 array TH_saveJsonTL(dict ref)
@@ -420,6 +420,8 @@ array TH_saveJsonTL(dict ref)
 		string name = d["post"]["author"]["displayName"];
 		string post = d["post"]["record"]["text"];
 		string createdAt = d["post"]["record"]["createdAt"];
+		string uri = d["post"]["uri"];
+		string cid = d["post"]["cid"];
 		if (dIconPath[sname] == nil) {
 			string image_url = d["post"]["author"]["avatar"];
 			TH_getIcon(image_url, sname);
@@ -430,6 +432,8 @@ array TH_saveJsonTL(dict ref)
 		};
 		dict dAdd = ${
 			$("text", post),
+			$("uri", uri),
+			$("cid", cid),
 			$("createdAt", createdAt),
 			$("boostby", boostby),
 			$("images", images),
@@ -460,7 +464,7 @@ string getImage(string image_url)
 	return name;
 }
 //------------------------------------------------------------------------------
-// 関数名：getJsonTL
+// 関数名：TH_saveJsonNotify
 // 機能　：サイトから指定したJSONオブジェクトを取得する(必要な情報のみ取捨選択済)
 // 　　　　未取得のユーザアイコンも取得する
 // 引数　：url 取得先URL
@@ -479,6 +483,8 @@ array TH_saveJsonNotify(dict ref)
 		string sname = d["author"]["handle"];
 		string name = d["author"]["displayName"];
 		string createdAt = d["record"]["createdAt"];
+		string uri = d["uri"];
+		string cid = d["cid"];
 		string post = "";
 		if (reason == "reply") {
 			post = d["record"]["text"];
@@ -493,6 +499,8 @@ array TH_saveJsonNotify(dict ref)
 		};
 		dict dAdd = ${
 			$("text", post),
+			$("uri", uri),
+			$("cid", cid),
 			$("createdAt", createdAt),
 			$("reason", reason),
 			$("user", dUser)
@@ -562,6 +570,8 @@ string showTL(string title, array arTL)
 			name = sname;
 		}
 		string post = d["text"];
+		string uri = d["uri"];
+		string cid = d["cid"];
 		string boostby = d["boostby"];
 		string reason = d["reason"];
 		array images = d["images"];
@@ -573,8 +583,13 @@ string showTL(string title, array arTL)
 			path = dIconPath[boostby];
 			s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
 		}
+		// favoritedの場合スターを表示
+		if (title == "home") {
+			path = _abspath("image\fam_star_g.png");
+			s += "\__q[AddStar," + uri + "," + cid + ",1]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+		}
 		// 名前表示
-		s += menuUserName(name, {"ViewPost", title, name, post, sname, images_arg});
+		s += menuUserName(name, {"ViewPost", title, name, post, sname, uri, cid, images_arg});
 		// POST表示
 		string text;
 		if (title == "home") {
@@ -633,7 +648,8 @@ string ViewPost(dict ref)
 	  default:
 		break;
 	}
-	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"], _strsplit(ref["Reference6"], _bytechar(1)));
+	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"],
+		ref["Reference6"], ref["Reference7"], _strsplit(ref["Reference8"], _bytechar(1)));
 	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
 
 	return s;
@@ -645,9 +661,12 @@ string ViewPost(dict ref)
 // 引数　：name ユーザ名（表示用）
 // 引数　：post POST内容
 // 引数　：sname ユーザ名
+// 引数　：uri
+// 引数　：cid
+// 引数　：images 画像ID
 // 戻り値：バルーン上部に個別のPOSTを表示するSakuraScript
 //------------------------------------------------------------------------------
-string showViewPost(string title, string name, string post, string sname, array images)
+string showViewPost(string title, string name, string post, string sname, string uri, string cid, array images)
 {
 	string images_arg = JOIN(images, _bytechar(1));
 	string s;
@@ -659,9 +678,14 @@ string showViewPost(string title, string name, string post, string sname, array 
 	string path = dIconPath[sname];
 	s += "\_l[0,0]\n\n[half]"
 		+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+	// スター表示
+	if (title == "home") {
+		path = _abspath("image\fam_star_g.png");
+		s += "\__q[AddStar," + uri + "," + cid + ",1]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+	}
 	// テキストコピーアイコン表示
 	path = _abspath("image\fam_pencil_go.png");
-	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + images_arg + "]"
+	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + uri + "," + cid + "," + images_arg + "]"
 		+ "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
 	// ユーザ名表示
 	string escapedName = escapeAllTags(name);
@@ -851,7 +875,6 @@ string InputPost(dict ref)
 	string post = ref["Reference1"];
 	string server_url = dictSaveData["server_url"];
 	string url = server_url + "/xrpc/com.atproto.repo.createRecord";
-	string createdAt = 
 	dict param = ${
 		$("repo", dictSaveData["identifier"]),
 		$("collection", "app.bsky.feed.post"),
@@ -865,7 +888,7 @@ string InputPost(dict ref)
 		+ "," + url
 		+ ",--authorization=Bearer " + accessJwt
 		+ ",--content-type=application/json"
-		+ "," + escapeText(paramstr)
+		+ "," + escapeText("--param=" + paramstr)
 		+ ",--async=createRecord"
 		+ ",--nofile"
 		+ "]\e";
@@ -882,4 +905,41 @@ string fillzero(int n)
 		return "0" + n;
 	else
 		return "" + n;
+}
+//-------------------------------------------------------
+// 選択肢：AddStar
+// 内容　：Add Star or Remove Star
+// Reference2: uri
+// Reference3: cid
+// Reference4: 1:create/0:destroy(Boolean)
+//-------------------------------------------------------
+string AddStar(dict ref)
+{
+	string uri = ref["Reference2"];
+	string cid = ref["Reference3"];
+	int addstar = ref["Reference4"];
+
+	string server_url = dictSaveData["server_url"];
+	string url = server_url + "/xrpc/com.atproto.repo.createRecord";
+	dict param = ${
+		$("repo", dictSaveData["identifier"]),
+		$("collection", "app.bsky.feed.like"),
+		$("record", ${
+			$("subject", ${
+				$("uri", uri),
+				$("cid", cid)
+			}),
+			$("createdAt", getnow())
+		})
+	};
+	string paramstr = _strreplace(_azv2json(param), _bytechar(13) + _bytechar(10), "");
+	string s = "\![execute,http-post"
+		+ "," + url
+		+ ",--authorization=Bearer " + accessJwt
+		+ ",--content-type=application/json"
+		+ "," + escapeText("--param=" + paramstr)
+		+ ",--async=createRecord"
+		+ ",--nofile"
+		+ "]\e";
+	return s;
 }
