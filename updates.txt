@@ -10,6 +10,7 @@ file,ghost/master/image/fam_house.png99bea32e1990e011e870f6c562e87a6asize=806
 file,ghost/master/image/fam_pencil_go.pngf460e6b634e432b6a158524c38cc2e92size=666date=2012-12-21T00:00:00
 file,ghost/master/image/fam_readme.txt4125f02094cab8cb840eb4a52efe69edsize=605date=2012-12-21T00:00:00
 file,ghost/master/image/fam_table_refresh.png89874ba5476363b725d97aafdbbabbf4size=795date=2012-12-21T00:00:00
+file,ghost/master/image/fam_user_comment.png05d28091baa2679213ecb083c0a24f22size=743date=2012-12-21T00:00:00
 file,ghost/master/image/fam_wrench.pnga137eb4441860564ce1655357af26de8size=610date=2012-12-21T00:00:00
 file,ghost/master/main.azr6e71bad7ffdf6eacc983c88044d8194asize=2138date=2012-12-21T00:00:00
 file,ghost/master/saori/HandUtil/HandUtil.dlld382e237a4b365a302b281664d9e9d36size=38400date=2012-12-21T00:00:00
@@ -29,8 +30,8 @@ file,ghost/master/saori/yaya/yaya.dll56e3af56c88e696cea1f39d53b239cefsize=8806
 file,ghost/master/saori/yaya/yaya.txte06e05316bf1288ceac43d7c2bf4ebcfsize=1700date=2012-12-21T00:00:00
 file,ghost/master/saori/yaya/yaya_readme.txtf3f30b903c63d782b51a2bd683857bf1size=3336date=2012-12-21T00:00:00
 file,ghost/master/template/event.azr2f9ec8b2e23cae045d5f6914376e87besize=2099date=2012-12-21T00:00:00
-file,ghost/master/template/plugin_init.azr54d0448ead107b96bc549d0d946fe54asize=4472date=2012-12-21T00:00:00
-file,ghost/master/template/plugin_menu.azr4be0f5c8c25aad1481fe0d2edddf355csize=26269date=2012-12-21T00:00:00
+file,ghost/master/template/plugin_init.azr0b5e6190151df67010cfdc8dd0c20e47size=4524date=2012-12-21T00:00:00
+file,ghost/master/template/plugin_menu.azr54a0c86303636ffebf5e176075445d78size=28797date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_util.azr213d36e6e034c906bc5862ea98046687size=14972date=2012-12-21T00:00:00
 file,ghost/master/template/resource.azr8fc5f672230263ef368e5b94cdd18188size=778date=2012-12-21T00:00:00
 file,install.txt50caa4ebb610d8fd926cc7d0e49b37adsize=70date=2012-12-21T00:00:00
