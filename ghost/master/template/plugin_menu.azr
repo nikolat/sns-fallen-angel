@@ -395,11 +395,22 @@ array TH_saveJsonTL(dict ref)
 	for (int i = 0; i < n; i++) {
 		dict d = arTLTmp[i];
 		string boostby = nil;
+		array images = {};
 		if (d["reason"] != nil) {
 			boostby = d["reason"]["by"]["handle"];
 			if (dIconPath[boostby] == nil) {
 				string image_url = d["reason"]["by"]["avatar"];
 				TH_getIcon(image_url, boostby);
+			}
+		}
+		if (d["post"]["record"]["embed"] != nil) {
+			if (d["post"]["record"]["embed"]["$type"] == "app.bsky.embed.images") {
+				for (int j = 0; d["post"]["embed"]["images"][j] != nil; j++) {
+					string image_url = d["post"]["embed"]["images"][j]["fullsize"];
+					string imageID = getImage(image_url);
+					if (imageID != "")
+						images += imageID;
+				}
 			}
 		}
 		string sname = d["post"]["author"]["handle"];
@@ -418,11 +429,32 @@ array TH_saveJsonTL(dict ref)
 			$("text", post),
 			$("createdAt", createdAt),
 			$("boostby", boostby),
+			$("images", images),
 			$("user", dUser)
 		};
 		arTLAdd += dAdd;
 	}
 	return arTLAdd;
+}
+string getImage(string image_url)
+{
+	array a = _strsplit(image_url, "@");
+	string extension = "." + a[_aryvn(a) - 1];
+	array a2 = _strsplit(a[_aryvn(a) - 2], "/");
+	string name = a2[_aryvn(a2) - 1];
+	string tmpRelativePath = "icon\tmp" + extension;
+	string tmpPath = _abspath(tmpRelativePath);
+	string pathAfter = _abspath("icon\image_" + name + ".png");
+	http_download(image_url, tmpRelativePath);
+	if (isImageFile(tmpPath)) {
+		resizeImage(tmpPath, pathAfter, 64, 64);
+		_fdelete(tmpPath);
+	}
+	else {
+		_fdelete(tmpPath);
+		return "";
+	}
+	return name;
 }
 //------------------------------------------------------------------------------
 // 関数名：getJsonTL
@@ -529,6 +561,8 @@ string showTL(string title, array arTL)
 		string post = d["text"];
 		string boostby = d["boostby"];
 		string reason = d["reason"];
+		array images = d["images"];
+		string images_arg = JOIN(images, _bytechar(1));
 		// アイコン表示
 		string path = dIconPath[sname];
 		s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
@@ -537,7 +571,7 @@ string showTL(string title, array arTL)
 			s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
 		}
 		// 名前表示
-		s += menuUserName(name, {"ViewPost", title, name, post, sname});
+		s += menuUserName(name, {"ViewPost", title, name, post, sname, images_arg});
 		// POST表示
 		string text;
 		if (title == "home") {
@@ -596,7 +630,7 @@ string ViewPost(dict ref)
 	  default:
 		break;
 	}
-	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"]);
+	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"], _strsplit(ref["Reference6"], _bytechar(1)));
 	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
 
 	return s;
@@ -610,8 +644,9 @@ string ViewPost(dict ref)
 // 引数　：sname ユーザ名
 // 戻り値：バルーン上部に個別のPOSTを表示するSakuraScript
 //------------------------------------------------------------------------------
-string showViewPost(string title, string name, string post, string sname)
+string showViewPost(string title, string name, string post, string sname, array images)
 {
+	string images_arg = JOIN(images, _bytechar(1));
 	string s;
 	// 情報が無い場合はreturn
 	if (sname == "") {
@@ -623,7 +658,7 @@ string showViewPost(string title, string name, string post, string sname)
 		+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
 	// テキストコピーアイコン表示
 	path = _abspath("image\fam_pencil_go.png");
-	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "]"
+	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + images_arg + "]"
 		+ "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
 	// ユーザ名表示
 	string escapedName = escapeAllTags(name);
@@ -632,6 +667,12 @@ string showViewPost(string title, string name, string post, string sname)
 	string escapedPost = escapeAllTags(post);
 	escapedPost = _regex_replace(escapedPost, "\\\\\\\\n", "\\\\n");
 	s += "\n" + escapedPost;
+	// 添付画像表示
+	for (int i = 0; images[i] != nil; i++) {
+		if (i == 0)
+			s += "\_l[0,0]\n\n\n\n[half]";
+		s += "\_b[icon\image_" + images[i] + ".png,inline,--option=opaque,--clipping=0 0 64 64]";
+	}
 	return s;
 }
 //-------------------------------------------------------
