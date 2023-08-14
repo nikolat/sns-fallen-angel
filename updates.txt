@@ -4,6 +4,7 @@ file,ghost/master/akari.dll604e9d9fa66b8ad367d22ccd682a74e4size=889856date=20
 file,ghost/master/descript.txtf2bbda7b3993eb73866143eec4828e62size=270date=2012-12-21T00:00:00
 file,ghost/master/icon/icon.txt1b0eff17e4ae32d04086f17df7c4c6bdsize=46date=2012-12-21T00:00:00
 file,ghost/master/image/default.png6db3d8d961a86c8a3245680c353ddeeesize=576date=2012-12-21T00:00:00
+file,ghost/master/image/fam_arrow_refresh.png6b95778460f660aa7c08f47d244780a7size=685date=2012-12-21T00:00:00
 file,ghost/master/image/fam_bell.png136ea093aece1468f16e0ab5fc6127easize=789date=2012-12-21T00:00:00
 file,ghost/master/image/fam_cross.png42492684e24356a4081134894eabeb9esize=655date=2012-12-21T00:00:00
 file,ghost/master/image/fam_house.png99bea32e1990e011e870f6c562e87a6asize=806date=2012-12-21T00:00:00
@@ -33,7 +34,7 @@ file,ghost/master/saori/yaya/yaya.txte06e05316bf1288ceac43d7c2bf4ebcfsize=1700
 file,ghost/master/saori/yaya/yaya_readme.txtf3f30b903c63d782b51a2bd683857bf1size=3336date=2012-12-21T00:00:00
 file,ghost/master/template/event.azr2f9ec8b2e23cae045d5f6914376e87besize=2099date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_init.azr0b5e6190151df67010cfdc8dd0c20e47size=4524date=2012-12-21T00:00:00
-file,ghost/master/template/plugin_menu.azrd200ec5bff49aff8183865c1e5a5140dsize=31234date=2012-12-21T00:00:00
+file,ghost/master/template/plugin_menu.azr4bfc5acf6f2ea88e712fc1e2dbe6505fsize=33062date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_util.azr213d36e6e034c906bc5862ea98046687size=14972date=2012-12-21T00:00:00
 file,ghost/master/template/resource.azr8fc5f672230263ef368e5b94cdd18188size=778date=2012-12-21T00:00:00
 file,install.txt50caa4ebb610d8fd926cc7d0e49b37adsize=70date=2012-12-21T00:00:00
