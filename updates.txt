@@ -9,6 +9,7 @@ file,ghost/master/image/fam_cross.png42492684e24356a4081134894eabeb9esize=655
 file,ghost/master/image/fam_house.png99bea32e1990e011e870f6c562e87a6asize=806date=2012-12-21T00:00:00
 file,ghost/master/image/fam_pencil_go.pngf460e6b634e432b6a158524c38cc2e92size=666date=2012-12-21T00:00:00
 file,ghost/master/image/fam_readme.txt4125f02094cab8cb840eb4a52efe69edsize=605date=2012-12-21T00:00:00
+file,ghost/master/image/fam_star.pngc8ca219ff43a2fb1dea67de2582123afsize=670date=2012-12-21T00:00:00
 file,ghost/master/image/fam_star_g.png7193c73aea64caf9021451b28ed32cd2size=517date=2012-12-21T00:00:00
 file,ghost/master/image/fam_table_refresh.png89874ba5476363b725d97aafdbbabbf4size=795date=2012-12-21T00:00:00
 file,ghost/master/image/fam_user_comment.png05d28091baa2679213ecb083c0a24f22size=743date=2012-12-21T00:00:00
@@ -32,7 +33,7 @@ file,ghost/master/saori/yaya/yaya.txte06e05316bf1288ceac43d7c2bf4ebcfsize=1700
 file,ghost/master/saori/yaya/yaya_readme.txtf3f30b903c63d782b51a2bd683857bf1size=3336date=2012-12-21T00:00:00
 file,ghost/master/template/event.azr2f9ec8b2e23cae045d5f6914376e87besize=2099date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_init.azr0b5e6190151df67010cfdc8dd0c20e47size=4524date=2012-12-21T00:00:00
-file,ghost/master/template/plugin_menu.azrc150a20eae21ea273876c9550146c7c5size=30643date=2012-12-21T00:00:00
+file,ghost/master/template/plugin_menu.azrd200ec5bff49aff8183865c1e5a5140dsize=31234date=2012-12-21T00:00:00
 file,ghost/master/template/plugin_util.azr213d36e6e034c906bc5862ea98046687size=14972date=2012-12-21T00:00:00
 file,ghost/master/template/resource.azr8fc5f672230263ef368e5b94cdd18188size=778date=2012-12-21T00:00:00
 file,install.txt50caa4ebb610d8fd926cc7d0e49b37adsize=70date=2012-12-21T00:00:00
