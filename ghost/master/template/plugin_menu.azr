@@ -426,7 +426,10 @@ array TH_saveJsonTL(dict ref)
 		if (d["post"]["viewer"]["like"] != nil) {
 			isfavorited = 1;
 		}
-
+		dict root = ${};
+		if (d["post"]["record"]["reply"] != nil) {
+			root = d["post"]["record"]["reply"]["root"];
+		}
 		if (dIconPath[sname] == nil) {
 			string image_url = d["post"]["author"]["avatar"];
 			TH_getIcon(image_url, sname);
@@ -442,6 +445,7 @@ array TH_saveJsonTL(dict ref)
 			$("createdAt", createdAt),
 			$("repostby", repostby),
 			$("isfavorited", isfavorited),
+			$("root", root),
 			$("images", images),
 			$("user", dUser)
 		};
@@ -579,13 +583,21 @@ string showTL(string title, array arTL)
 		string uri = d["uri"];
 		string cid = d["cid"];
 		int isfavorited = d["isfavorited"];
+		string rooturi = "";
+		string rootcid = "";
+		if (_dicvn(d["root"]) > 0) {
+			rooturi = d["root"]["uri"];
+			rootcid = d["root"]["cid"];
+		}
 		string repostby = d["repostby"];
 		string reason = d["reason"];
 		array images = d["images"];
 		string images_arg = JOIN(images, _bytechar(1));
 		// アイコン表示
 		string path = dIconPath[sname];
-		s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+		s += "\__q[OpenPostBar," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + ","
+			+ uri + "," + cid + "," + rooturi + "," + rootcid + "," + isfavorited + ",0,1]"
+			+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]\__q";
 		if (repostby != nil) {
 			path = dIconPath[repostby];
 			s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
@@ -601,7 +613,7 @@ string showTL(string title, array arTL)
 			}
 		}
 		// 名前表示
-		s += menuUserName(name, {"ViewPost", title, name, post, sname, uri, cid, isfavorited, 0, images_arg});
+		s += menuUserName(name, {"ViewPost", title, name, post, sname, uri, cid, rooturi, rootcid, isfavorited, 0, 0, images_arg});
 		// POST表示
 		string text;
 		if (title == "home") {
@@ -661,7 +673,8 @@ string ViewPost(dict ref)
 		break;
 	}
 	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"],
-		ref["Reference6"], ref["Reference7"], ref["Reference8"], ref["Reference9"], _strsplit(ref["Reference10"], _bytechar(1)));
+		ref["Reference6"], ref["Reference7"], ref["Reference8"], ref["Reference9"], ref["Reference10"],
+		ref["Reference11"], ref["Reference12"], _strsplit(ref["Reference13"], _bytechar(1)));
 	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
 
 	return s;
@@ -675,12 +688,15 @@ string ViewPost(dict ref)
 // 引数　：sname ユーザ名
 // 引数　：uri
 // 引数　：cid
+// 引数　：rooturi
+// 引数　：rootcid
 // 引数　：isfavorited
 // 引数　：isrepost
+// 引数　：isreply
 // 引数　：images 画像ID
 // 戻り値：バルーン上部に個別のPOSTを表示するSakuraScript
 //------------------------------------------------------------------------------
-string showViewPost(string title, string name, string post, string sname, string uri, string cid, int isfavorited, int isrepost, array images)
+string showViewPost(string title, string name, string post, string sname, string uri, string cid, string rooturi, string rootcid, int isfavorited, int isrepost, int isreply, array images)
 {
 	string images_arg = JOIN(images, _bytechar(1));
 	string s;
@@ -690,12 +706,18 @@ string showViewPost(string title, string name, string post, string sname, string
 	}
 	// ユーザアイコン表示
 	string path = dIconPath[sname];
-	s += "\_l[0,0]\n\n[half]"
-		+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+	if (uri != "")
+		s += "\_l[0,0]\n\n[half]\__q[OpenPostBar," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + ","
+			+ uri + "," + cid + "," + rooturi + "," + rootcid + "," + isfavorited + ",0,1," + images_arg + "]"
+			+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]\__q";
+	else
+		s += "\_l[0,0]\n\n[half]"
+			+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
 	// Repostアイコン表示
 	if (title == "home") {
 		path = _abspath("image\fam_arrow_refresh.png");
-		s += "\__q[ViewPost," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + uri + "," + cid + "," + isfavorited + ",1," + images_arg + "]"
+		s += "\__q[ViewPost," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + ","
+			+ uri + "," + cid + "," + rooturi + "," + rootcid + "," + isfavorited + ",1,0," + images_arg + "]"
 			+ "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
 	}
 	// スター表示
@@ -710,7 +732,8 @@ string showViewPost(string title, string name, string post, string sname, string
 	}
 	// テキストコピーアイコン表示
 	path = _abspath("image\fam_pencil_go.png");
-	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + uri + "," + cid + "," + isfavorited + ",0," + images_arg + "]"
+	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + ","
+		+ uri + "," + cid + "," + rooturi + "," + rootcid + "," + isfavorited + ",0,0," + images_arg + "]"
 		+ "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
 	// ユーザ名表示
 	string escapedName = escapeAllTags(name);
@@ -719,7 +742,12 @@ string showViewPost(string title, string name, string post, string sname, string
 	string escapedPost = escapeAllTags(post);
 	escapedPost = _regex_replace(escapedPost, "\\\\\\\\n", "\\\\n");
 	if (isrepost) {
-		s += "\n\_l[20,]Repost this post ? \__q[Repost," + uri + "," + cid + "] Y \__q / \__q[ViewPost," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + uri + "," + cid + "," + isfavorited + ",0," + images_arg + "] N \__q"
+		s += "\n\_l[20,]Repost this post ? \__q[Repost," + uri + "," + cid + "] Y \__q / \__q[ViewPost,"
+			+ title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + ","
+			+ uri + "," + cid + "," + rooturi + "," + rootcid + "," + isfavorited + ",0,0," + images_arg + "] N \__q"
+			+ "\n\n[half]\f[color,#888]" + escapedPost + "\f[color,default]";
+	} else if (isreply) {
+		s += "\n\_l[20,]<< \f[bold,true]Reply 300 charactors.\f[bold,false] >>"
 		   + "\n\n[half]\f[color,#888]" + escapedPost + "\f[color,default]";
 	} else {
 		s += "\n" + escapedPost;
@@ -873,12 +901,36 @@ string OpenPostBar(dict ref)
 {
 	if (selfScreenName == "")
 		return showSettingMenu();
+	int isreply = ref["Reference12"];
+	if (isreply) {
+		if (ref["Reference8"] != "") {
+			dReply = ${
+				$("uri", ref["Reference6"]),
+				$("cid", ref["Reference7"]),
+				$("rooturi", ref["Reference8"]),
+				$("rootcid", ref["Reference9"])
+			};
+		}
+		else {
+			dReply = ${
+				$("uri", ref["Reference6"]),
+				$("cid", ref["Reference7"]),
+				$("rooturi", ref["Reference6"]),
+				$("rootcid", ref["Reference7"])
+			};
+		}
+	}
+	else {
+		dReply = ${};
+	}
 	string path = dIconPath[selfScreenName];
 	string s;
 	s += closeAllInputBox();
 	s += "\![open,inputbox,Post,0,--limit=300]";
-	s += "\_l[0,0]\n\n[half]\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
-	s += " << \f[bold,true]Post in 300 charactors.\f[bold,false] >>";
+	if (!isreply) {
+		s += "\_l[0,0]\n\n[half]\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
+		s += " << \f[bold,true]Post in 300 charactors.\f[bold,false] >>";
+	}
 	string title = ref["Reference2"];
 	if (title == "")
 		title = "home";
@@ -893,7 +945,8 @@ string OpenPostBar(dict ref)
 		break;
 	}
 	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"],
-		ref["Reference6"], ref["Reference7"], ref["Reference8"], ref["Reference9"], _strsplit(ref["Reference10"], _bytechar(1)));
+		ref["Reference6"], ref["Reference7"], ref["Reference8"], ref["Reference9"], ref["Reference10"],
+		ref["Reference11"], ref["Reference12"], _strsplit(ref["Reference13"], _bytechar(1)));
 	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
 
 	return s;
@@ -904,16 +957,41 @@ string OpenPostBar(dict ref)
 string InputPost(dict ref)
 {
 	string post = ref["Reference1"];
+	dict d = dReply;
+	dReply = ${};
 	string server_url = dictSaveData["server_url"];
 	string url = server_url + "/xrpc/com.atproto.repo.createRecord";
-	dict param = ${
-		$("repo", dictSaveData["identifier"]),
-		$("collection", "app.bsky.feed.post"),
-		$("record", ${
-			$("text", post),
-			$("createdAt", getnow())
-		})
-	};
+	dict param;
+	if (_dicvn(d) == 0) {
+		param = ${
+			$("repo", dictSaveData["identifier"]),
+			$("collection", "app.bsky.feed.post"),
+			$("record", ${
+				$("text", post),
+				$("createdAt", getnow())
+			})
+		};
+	}
+	else {
+		param = ${
+			$("repo", dictSaveData["identifier"]),
+			$("collection", "app.bsky.feed.post"),
+			$("record", ${
+				$("text", post),
+				$("createdAt", getnow()),
+				$("reply", ${
+					$("root", ${
+						$("cid", d["rootcid"]),
+						$("uri", d["rooturi"])
+					}),
+					$("parent", ${
+						$("cid", d["cid"]),
+						$("uri", d["uri"])
+					})
+				})
+			})
+		};
+	}
 	string paramstr = _strreplace(_azv2json(param), _bytechar(13) + _bytechar(10), "");
 	string s = "\![execute,http-post"
 		+ "," + url
