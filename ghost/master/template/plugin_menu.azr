@@ -422,6 +422,11 @@ array TH_saveJsonTL(dict ref)
 		string createdAt = d["post"]["record"]["createdAt"];
 		string uri = d["post"]["uri"];
 		string cid = d["post"]["cid"];
+		int isfavorited = 0;
+		if (d["post"]["viewer"]["like"] != nil) {
+			isfavorited = 1;
+		}
+
 		if (dIconPath[sname] == nil) {
 			string image_url = d["post"]["author"]["avatar"];
 			TH_getIcon(image_url, sname);
@@ -436,6 +441,7 @@ array TH_saveJsonTL(dict ref)
 			$("cid", cid),
 			$("createdAt", createdAt),
 			$("boostby", boostby),
+			$("isfavorited", isfavorited),
 			$("images", images),
 			$("user", dUser)
 		};
@@ -572,6 +578,7 @@ string showTL(string title, array arTL)
 		string post = d["text"];
 		string uri = d["uri"];
 		string cid = d["cid"];
+		int isfavorited = d["isfavorited"];
 		string boostby = d["boostby"];
 		string reason = d["reason"];
 		array images = d["images"];
@@ -583,13 +590,18 @@ string showTL(string title, array arTL)
 			path = dIconPath[boostby];
 			s += "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
 		}
-		// favoritedの場合スターを表示
+		// isfavoritedの場合スターを表示
 		if (title == "home") {
-			path = _abspath("image\fam_star_g.png");
-			s += "\__q[AddStar," + uri + "," + cid + ",1]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+			if (isfavorited) {
+				path = _abspath("image\fam_star.png");
+				s += "\__q[AddStar," + postid + ",0]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+			} else {
+				path = _abspath("image\fam_star_g.png");
+				s += "\__q[AddStar," + postid + ",1]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+			}
 		}
 		// 名前表示
-		s += menuUserName(name, {"ViewPost", title, name, post, sname, uri, cid, images_arg});
+		s += menuUserName(name, {"ViewPost", title, name, post, sname, uri, cid, isfavorited, images_arg});
 		// POST表示
 		string text;
 		if (title == "home") {
@@ -649,7 +661,7 @@ string ViewPost(dict ref)
 		break;
 	}
 	s += showViewPost(ref["Reference2"], ref["Reference3"], ref["Reference4"], ref["Reference5"],
-		ref["Reference6"], ref["Reference7"], _strsplit(ref["Reference8"], _bytechar(1)));
+		ref["Reference6"], ref["Reference7"], ref["Reference8"], _strsplit(ref["Reference9"], _bytechar(1)));
 	s = "\![set,balloontimeout,0]\![set,choicetimeout,0]\![set,autoscroll,disable]\0\b[2]\_q" + s + "\_q\e";
 
 	return s;
@@ -663,10 +675,11 @@ string ViewPost(dict ref)
 // 引数　：sname ユーザ名
 // 引数　：uri
 // 引数　：cid
+// 引数　：isfavorited
 // 引数　：images 画像ID
 // 戻り値：バルーン上部に個別のPOSTを表示するSakuraScript
 //------------------------------------------------------------------------------
-string showViewPost(string title, string name, string post, string sname, string uri, string cid, array images)
+string showViewPost(string title, string name, string post, string sname, string uri, string cid, int isfavorited, array images)
 {
 	string images_arg = JOIN(images, _bytechar(1));
 	string s;
@@ -680,12 +693,17 @@ string showViewPost(string title, string name, string post, string sname, string
 		+ "\_b[" + path + ",inline,--option=opaque,--clipping=0 0 16 16]";
 	// スター表示
 	if (title == "home") {
-		path = _abspath("image\fam_star_g.png");
-		s += "\__q[AddStar," + uri + "," + cid + ",1]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+		if (isfavorited) {
+			path = _abspath("image\fam_star.png");
+			s += "\__q[AddStar," + postid + ",0]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+		} else {
+			path = _abspath("image\fam_star_g.png");
+			s += "\__q[AddStar," + postid + ",1]\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
+		}
 	}
 	// テキストコピーアイコン表示
 	path = _abspath("image\fam_pencil_go.png");
-	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + uri + "," + cid + "," + images_arg + "]"
+	s += "\__q[TextCopy," + title + "," + escapeText(name) + "," + escapeText(post) + "," + sname + "," + uri + "," + cid + "," + isfavorited + "," + images_arg + "]"
 		+ "\_b[" + path + ",inline,--clipping=0 0 16 16]\__q";
 	// ユーザ名表示
 	string escapedName = escapeAllTags(name);
