@@ -1008,7 +1008,12 @@ string InputPost(dict ref)
 string getnow()
 {
 	dict d = _gettime();
-	return "" + d["年"] + "-" + fillzero(d["月"]) + "-" + fillzero(d["日"]) + "T" + fillzero(d["時"]) + ":" + fillzero(d["分"]) + ":" + fillzero(d["秒"]) + "." + d["ミリ秒"] + "+09:00";
+	int tz = _systemdict["OnNotifyInternationalInfo"]["Reference0"];
+	string sign = "-";
+	if (tz <= 0)
+		sign = "+";
+	string tzstr = sign + fillzero((int)_fabs(tz) / 60) + ":" + fillzero((int)_fabs(tz) % 60);
+	return "" + d["年"] + "-" + fillzero(d["月"]) + "-" + fillzero(d["日"]) + "T" + fillzero(d["時"]) + ":" + fillzero(d["分"]) + ":" + fillzero(d["秒"]) + "." + d["ミリ秒"] + tzstr;
 }
 string fillzero(int n)
 {
